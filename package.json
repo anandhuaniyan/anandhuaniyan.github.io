@@ -1,0 +1,9 @@
+{
+  "name": "anandhu-aniyan-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node --check script.js && node scripts/build.mjs"
+  }
+}
