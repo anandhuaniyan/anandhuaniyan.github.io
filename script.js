@@ -307,3 +307,45 @@
     }
   });
 })();
+
+// Decorative desktop-only light. Transform writes are batched to animation frames.
+(() => {
+  const eligible = matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+  const light = document.createElement('div');
+  light.className = 'pointer-light';
+  light.setAttribute('aria-hidden', 'true');
+  document.body.append(light);
+  let frame = 0;
+  let x = 0, y = 0, targetX = 0, targetY = 0;
+  let visible = false;
+  function draw() {
+    x += (targetX - x) * .22;
+    y += (targetY - y) * .22;
+    light.style.transform = `translate3d(${x - 320}px, ${y - 320}px, 0)`;
+    if (visible && Math.abs(targetX - x) + Math.abs(targetY - y) > .25) frame = requestAnimationFrame(draw);
+    else frame = 0;
+  }
+  function hide() {
+    visible = false;
+    light.classList.remove('is-visible');
+    cancelAnimationFrame(frame);
+    frame = 0;
+  }
+  function move(event) {
+    if (!eligible.matches || event.pointerType !== 'mouse') return;
+    targetX = event.clientX;
+    targetY = event.clientY;
+    if (!visible) { x = targetX; y = targetY; visible = true; light.classList.add('is-visible'); }
+    if (!frame) frame = requestAnimationFrame(draw);
+  }
+  function configure() {
+    hide();
+    document.removeEventListener('pointermove', move);
+    if (eligible.matches) document.addEventListener('pointermove', move, { passive: true });
+  }
+  document.documentElement.addEventListener('pointerleave', hide);
+  addEventListener('blur', hide);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) hide(); });
+  eligible.addEventListener('change', configure);
+  configure();
+})();
